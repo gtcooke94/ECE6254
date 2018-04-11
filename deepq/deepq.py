@@ -1,4 +1,5 @@
 #https://keon.io/deep-q-learning/
+#https://towardsdatascience.com/reinforcement-learning-w-keras-openai-actor-critic-models-f084612cfd69
 
 import keras
 import random
@@ -12,6 +13,39 @@ from keras import backend as K
 
 
 EPISODES = 1000
+
+class ActorCritic:
+    def __init__(self, env, sess):
+        self.env = env
+        self.sess = sess
+
+        self.learning_rate = 0.001
+        self.epsilon_decay = .995
+        self.gamma = .95
+        self.tau   = .125
+        self.memory = deque(maxlen=2000)
+
+        self.actor_state_input, self.actor_model = self.create_actor_model()
+        _, self.target_actor_model = self.create_actor_model()
+
+        self.actor_critic_grad = tf.placeholder(tf.float32, [None, self.env.action_space.shape[0]])
+
+        actor_model_weight = self.actor_model.trainable_weights
+        self.actor_grads = tf.gradients(self.actor_model.output, actor_model_weights, -self.actor_critic_grad)
+        grads = zip(self.actor_grads, actor_model_weights)
+        self.optimize = tf.train.AdamOptimizer(self.learning_rate).apply_gradients(grads)
+
+    def create_actor_model(self):
+        state_input = Input(shape=self.env.observation_space.shape)
+        h1 = Dense(24, activation='relu')(state_input)
+        h2 = Dense(48, activation = 'relu')(h1)
+        h3 = Dense(24, activation='relu')(h2)
+        output = Dense(self.env.action_space.shape[0], activation='relu')(h3)
+
+        model = Model(input=state_input, output=output)
+        adam = Adam(lr=0.001)
+        model.compile(loss='mse', optimizer=adam)
+        return state_input, model
 
 class DQNAgent:
     def __init__(self, state_size, action_size, action_low, action_high):
