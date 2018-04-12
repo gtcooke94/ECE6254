@@ -221,8 +221,11 @@ if __name__ == "__main__":
 
     cur_state = env.reset()
     action = env.action_space.sample()
+    results = deque(maxlen = 100)
+    results_counter = 0
+    first_counter = 0
     while True:
-        env.render()
+        # env.render()
         cur_state = cur_state.reshape((1, env.observation_space.shape[0]))
         action = actor_critic.act(cur_state)
         action = action.reshape((1, env.action_space.shape[0]))
@@ -232,8 +235,18 @@ if __name__ == "__main__":
 
         actor_critic.remember(cur_state, action, reward, new_state, done)
         actor_critic.train()
+        results.append(reward)
+        if (first_counter > 100):
+            if (counter % 10 == 0):
+                # Average last 100 rewards
+
+        counter = (counter + 1) % 10
+
+
+
 
         cur_state = new_state
+        print(reward, done)
 
     # for e in range(EPISODES):
 
