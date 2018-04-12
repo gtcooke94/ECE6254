@@ -11,6 +11,9 @@ from keras.layers.merge import Add, Multiply
 from keras.optimizers import Adam
 from keras import backend as K
 import tensorflow as tf
+from matplotlib import pyplot as plt
+
+
 
 
 EPISODES = 1000
@@ -198,6 +201,11 @@ class DQNAgent:
             self.epsilon *= self.epsilon_decay
 
 
+# def plot_rewards(rewards):
+    # plt.plot(rewards)
+    # # plt.pause(0.05)
+    # plt.draw()
+
 
 if __name__ == "__main__":
 
@@ -224,7 +232,11 @@ if __name__ == "__main__":
     results = deque(maxlen = 100)
     results_counter = 0
     first_counter = 0
-    while True:
+    mean_rewards = []
+    overall_counter = 0
+    do_stuff = True
+    while do_stuff:
+        overall_counter += 1
         # env.render()
         cur_state = cur_state.reshape((1, env.observation_space.shape[0]))
         action = actor_critic.act(cur_state)
@@ -237,16 +249,22 @@ if __name__ == "__main__":
         actor_critic.train()
         results.append(reward)
         if (first_counter > 100):
-            if (counter % 10 == 0):
+            if (results_counter % 10 == 0):
                 # Average last 100 rewards
-
-        counter = (counter + 1) % 10
-
-
-
+                mean_rewards.append(np.mean(results))
+                # plot_rewards(mean_rewards)
+                env.render()
+            results_counter = (results_counter + 1) % 10
+        else:
+            first_counter += 1
 
         cur_state = new_state
         print(reward, done)
+        if overall_counter > 1000: do_stuff = False
+
+    plt.plot(mean_rewards)
+    plt.show()
+
 
     # for e in range(EPISODES):
 
