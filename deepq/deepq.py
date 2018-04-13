@@ -222,8 +222,8 @@ if __name__ == "__main__":
     # agent = DQNAgent(state_size, action_size, action_low, action_high)
 
 
-    num_trials = 10000
-    trial_len = 500
+    num_trials = 100
+    # trial_len = 500
     done = False
     batch_size = 32
 
@@ -234,35 +234,34 @@ if __name__ == "__main__":
     first_counter = 0
     mean_rewards = []
     overall_counter = 0
-    do_stuff = True
-    while do_stuff:
-        overall_counter += 1
-        # env.render()
-        cur_state = cur_state.reshape((1, env.observation_space.shape[0]))
-        action = actor_critic.act(cur_state)
-        action = action.reshape((1, env.action_space.shape[0]))
+    # do_stuff = True
+    episode_rewards = []
+    for episode_iter in range(num_trials):
+        
+        sum_rewards = 0
+        print("Starting episode %i" % episode_iter)
 
-        new_state, reward, done, _ = env.step(action)
-        new_state = new_state.reshape((1, env.observation_space.shape[0]))
+        while not done:
+            # env.render()
+            cur_state = cur_state.reshape((1, env.observation_space.shape[0]))
+            action = actor_critic.act(cur_state)
+            action = action.reshape((1, env.action_space.shape[0]))
 
-        actor_critic.remember(cur_state, action, reward, new_state, done)
-        actor_critic.train()
-        results.append(reward)
-        if (first_counter > 100):
-            if (results_counter % 10 == 0):
-                # Average last 100 rewards
-                mean_rewards.append(np.mean(results))
-                # plot_rewards(mean_rewards)
-                env.render()
-            results_counter = (results_counter + 1) % 10
-        else:
-            first_counter += 1
+            new_state, reward, done, _ = env.step(action)
+            new_state = new_state.reshape((1, env.observation_space.shape[0]))
 
-        cur_state = new_state
-        print(reward, done)
-        if overall_counter > 1000: do_stuff = False
+            actor_critic.remember(cur_state, action, reward, new_state, done)
+            actor_critic.train()
 
-    plt.plot(mean_rewards)
+            sum_rewards += reward
+            cur_state = new_state
+
+        print("Episode %i Reward = %f" % (episode_iter, sum_rewards))
+        episode_rewards.append(sum_rewards)
+        done = False
+        env.reset()
+
+    plt.plot(episode_rewards)
     plt.show()
 
 
