@@ -75,6 +75,8 @@ if __name__ == "__main__":
     rolling = deque(maxlen=100)
     hundred_averages = []
     episode_axis = []
+    epsilons = []
+    end_flag = False
 
     for e in range(EPISODES):
         state = env.reset()
@@ -94,12 +96,19 @@ if __name__ == "__main__":
                 scores.append(time);
                 rolling.append(time);
                 if (e >= 100 and e%10 == 0):
-                    hundred_averages.append(np.mean(rolling))
+                    cur_mean = np.mean(rolling)
+                    hundred_averages.append(cur_mean)
                     episode_axis.append(e)
+                    epsilons.append(agent.epsilon)
+                    if (cur_mean >= 195): end_flag = True
                 break
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
         if e % 10 == 0:
             agent.save("./save/cartpole-dqn.h5")
+        if (end_flag): break
+    np.savetxt("./save/episode_axis.csv", episode_axis, delimiter=",")
+    np.savetxt("./save/rolling_averages.csv", hundred_averages, delimiter=",")
+    np.savetxt("./save/epsilons.csv", epsilons, delimiter=",")
     plt.plot(episode_axis, hundred_averages)
     plt.show()
