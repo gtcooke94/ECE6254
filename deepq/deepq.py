@@ -72,11 +72,13 @@ if __name__ == "__main__":
     done = False
     batch_size = 32
     scores = []
+    all_rewards = []
     rolling = deque(maxlen=100)
     hundred_averages = []
     episode_axis = []
     epsilons = []
     end_flag = False
+    # env.render()
 
     for e in range(EPISODES):
         state = env.reset()
@@ -84,13 +86,17 @@ if __name__ == "__main__":
         for time in range(500):
             # if (e % 10 == 0):
                 # env.render()
+            env.render()
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
             reward = reward if not done else -10
             next_state = np.reshape(next_state, [1, state_size])
             agent.remember(state, action, reward, next_state, done)
             state = next_state
+            if (t == 499):
+                done = True
             if done:
+                all_rewards.append(time)
                 print("episode: {}/{}, score: {}, e: {:.2}"
                       .format(e, EPISODES, time, agent.epsilon))
                 scores.append(time);
@@ -104,11 +110,14 @@ if __name__ == "__main__":
                 break
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
-        if e % 10 == 0:
-            agent.save("./save/cartpole-dqn.h5")
-        if (end_flag): break
-    np.savetxt("./save/episode_axis.csv", episode_axis, delimiter=",")
-    np.savetxt("./save/rolling_averages.csv", hundred_averages, delimiter=",")
-    np.savetxt("./save/epsilons.csv", epsilons, delimiter=",")
-    plt.plot(episode_axis, hundred_averages)
-    plt.show()
+        # if e % 10 == 0:
+            # agent.save("./save/cartpole-dqn.h5")
+        if (end_flag): 
+            break
+
+    # np.savetxt("./save/episode_axis.csv", episode_axis, delimiter=",")
+    # np.savetxt("./save/rolling_averages.csv", hundred_averages, delimiter=",")
+    # np.savetxt("./save/epsilons.csv", epsilons, delimiter=",")
+    # np.savetxt("./save/all_rewards.csv", all_rewards, delimiter=",")
+    # plt.plot(episode_axis, hundred_averages)
+    # plt.show()
