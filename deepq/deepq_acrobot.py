@@ -78,28 +78,28 @@ if __name__ == "__main__":
     episode_axis = []
     epsilons = []
     end_flag = False
+    best_mean = -500
     # env.render()
 
     for e in range(EPISODES):
         state = env.reset()
         state = np.reshape(state, [1, state_size])
-        for time in range(500):
-            if (e % 10 == 0):
-                env.render()
+
+        for time in range(1000):
+            #if (e % 10 == 0):
+                #env.render()
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
             reward = reward if not done else -10
             next_state = np.reshape(next_state, [1, state_size])
             agent.remember(state, action, reward, next_state, done)
             state = next_state
-            if (time == 499):
-                done = True
             if done:
-                all_rewards.append(time)
+                all_rewards.append(-time)
                 print("episode: {}/{}, score: {}, e: {:.2}"
-                      .format(e, EPISODES, time, agent.epsilon))
-                scores.append(time);
-                rolling.append(time);
+                      .format(e, EPISODES, -time, agent.epsilon))
+                scores.append(-time);
+                rolling.append(-time);
                 if (e >= 100 and e%10 == 0):
                     cur_mean = np.mean(rolling)
                     hundred_averages.append(cur_mean)
@@ -109,8 +109,9 @@ if __name__ == "__main__":
                 break
         if len(agent.memory) > batch_size:
             agent.replay(batch_size)
-        # if e % 10 == 0:
-            # agent.save("./save/cartpole-dqn.h5")
+        if cur_mean >= best_mean:
+            best_mean = cur_mean
+            agent.save("./save/acrobot-dqn.h5")
         if (end_flag): 
             break
 
