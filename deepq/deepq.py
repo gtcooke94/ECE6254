@@ -84,16 +84,15 @@ if __name__ == "__main__":
         state = env.reset()
         state = np.reshape(state, [1, state_size])
         for time in range(500):
-            # if (e % 10 == 0):
-                # env.render()
-            env.render()
+            if (e % 10 == 0):
+                env.render()
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
             reward = reward if not done else -10
             next_state = np.reshape(next_state, [1, state_size])
             agent.remember(state, action, reward, next_state, done)
             state = next_state
-            if (t == 499):
+            if (time == 499):
                 done = True
             if done:
                 all_rewards.append(time)

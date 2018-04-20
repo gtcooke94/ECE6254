@@ -14,6 +14,7 @@ from gym import wrappers
 import tflearn
 import argparse
 import pprint as pp
+import pdb
 
 from replay_buffer import ReplayBuffer
 
@@ -70,6 +71,7 @@ class ActorNetwork(object):
 
         self.num_trainable_vars = len(
             self.network_params) + len(self.target_network_params)
+        #pdb.set_trace()
 
     def create_actor_network(self):
         inputs = tflearn.input_data(shape=[None, self.s_dim])
@@ -205,6 +207,8 @@ class CriticNetwork(object):
     def update_target_network(self):
         self.sess.run(self.update_target_network_params)
 
+
+
 # Taken from https://github.com/openai/baselines/blob/master/baselines/ddpg/noise.py, which is
 # based on http://math.stackexchange.com/questions/1287634/implementing-ornstein-uhlenbeck-in-matlab
 class OrnsteinUhlenbeckActionNoise:
@@ -246,8 +250,60 @@ def build_summaries():
 # ===========================
 #   Agent Training
 # ===========================
+def test(sess, env, args, actor, actor_noise):
+    summary_ops, summary_vars = build_summaries()
 
-def train(sess, env, args, actor, critic, actor_noise):
+    sess.run(tf.global_variables_initializer())
+    saver = tf.train.import_meta_graph('models/models.ckpt-700.meta')
+    saver.restore(sess, tf.train.latest_checkpoint('models/'))
+    
+    writer = tf.summary.FileWriter(args['summary_dir'], sess.graph)
+
+    # Initialize target network weights
+    #pdb.set_trace()
+    #actor.update_target_network()
+
+    for i in range(int(args['max_episodes'])):
+
+        s = env.reset()
+
+        ep_reward = 0
+        ep_ave_max_q = 0
+
+
+
+        for j in range(int(args['max_episode_len'])):
+            #pdb.set_trace()
+            env.render()
+
+            #actor.scaled_out: 'Mul:0'
+            #actor.inputs = 'InputData/X:0'
+            #a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
+            a = sess.run(sess.graph.get_tensor_by_name('Mul:0'), feed_dict={
+                sess.graph.get_tensor_by_name('InputData/X:0'): np.reshape(s, (1, actor.s_dim))
+                })
+
+
+            s2, r, terminal, info = env.step(a[0])
+
+            s = s2
+            ep_reward += r
+
+            if terminal:
+
+                summary_str = sess.run(summary_ops, feed_dict={
+                    summary_vars[0]: ep_reward,
+                    summary_vars[1]: ep_ave_max_q / float(j)
+                })
+
+                writer.add_summary(summary_str, i)
+                writer.flush()
+
+                print('| Reward: {:d} | Episode: {:d} | Qmax: {:.4f}'.format(int(ep_reward), \
+                        i, (ep_ave_max_q / float(j))))
+                break
+
+def train(sess, env, args, actor, critic, actor_noise, saver):
 
     # Set up summary Ops
     summary_ops, summary_vars = build_summaries()
@@ -274,11 +330,15 @@ def train(sess, env, args, actor, critic, actor_noise):
         ep_reward = 0
         ep_ave_max_q = 0
 
+
+
         for j in range(int(args['max_episode_len'])):
 
-            if args['render_env']:
-                env.render()
-
+            #if args['render_env']:
+                #env.render()
+            #if i%10 == 0:
+                #env.render()
+                #pdb.set_trace()
             # Added exploration noise
             #a = actor.predict(np.reshape(s, (1, 3))) + (1. / (1. + i))
             a = actor.predict(np.reshape(s, (1, actor.s_dim))) + actor_noise()
@@ -337,7 +397,15 @@ def train(sess, env, args, actor, critic, actor_noise):
                         i, (ep_ave_max_q / float(j))))
                 break
 
+        if i%10 == 0:
+            #tflearn.models.dnn.DNN(actor.scaled_out).save('model.tflearn')
+            #pdb.set_trace()
+            save_path = saver.save(sess, "models/models.ckpt", global_step=i)
+            print("Model saved in path: %s" % save_path)
+
+
 def main(args):
+    saver = tf.train.Saver()
 
     with tf.Session() as sess:
 
@@ -370,7 +438,8 @@ def main(args):
             else:
                 env = wrappers.Monitor(env, args['monitor_dir'], force=True)
 
-        train(sess, env, args, actor, critic, actor_noise)
+        #train(sess, env, args, actor, critic, actor_noise, saver)
+        test(sess, env, args, actor, actor_noise)
 
         if args['use_gym_monitor']:
             env.monitor.close()
