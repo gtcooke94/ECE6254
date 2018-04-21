@@ -114,9 +114,9 @@ if __name__ == "__main__":
         if (end_flag): 
             break
 
-    # np.savetxt("./save/episode_axis.csv", episode_axis, delimiter=",")
-    # np.savetxt("./save/rolling_averages.csv", hundred_averages, delimiter=",")
-    # np.savetxt("./save/epsilons.csv", epsilons, delimiter=",")
-    # np.savetxt("./save/all_rewards.csv", all_rewards, delimiter=",")
+    np.savetxt("./save/cp_episode_axis.csv", episode_axis, delimiter=",")
+    np.savetxt("./save/cp_rolling_averages.csv", hundred_averages, delimiter=",")
+    np.savetxt("./save/cp_epsilons.csv", epsilons, delimiter=",")
+    np.savetxt("./save/cp_all_rewards.csv", all_rewards, delimiter=",")
     # plt.plot(episode_axis, hundred_averages)
     # plt.show()

@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import Adam
 from matplotlib import pyplot as plt
+import sys
 
 EPISODES = 1000
 
@@ -62,11 +63,12 @@ class DQNAgent:
 
 
 if __name__ == "__main__":
-    env = gym.make('CartPole-v1')
+    env_string = sys.argv[1]
+    env = gym.make('%s-v1' % env_string)
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
     agent = DQNAgent(state_size, action_size)
-    agent.load("./save/cartpole-dqn-solved.h5")
+    agent.load("./save/%s-dqn-2.h5" % env_string)
     done = False
     batch_size = 32
     scores = []
@@ -80,7 +82,7 @@ if __name__ == "__main__":
         episode_reward = 0
         
         for time in range(500):
-            env.render()
+            #env.render()
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
             next_state = np.reshape(next_state, [1, state_size])
@@ -98,6 +100,9 @@ if __name__ == "__main__":
 
     # plt.plot(scores)
     # plt.show()
-    plt.plot(episode_axis, hundred_averages)
-    plt.show()
+    np.savetxt("./save/%s_test_episode_axis.csv" % env_string, episode_axis, delimiter=",")
+    np.savetxt("./save/%s_test_rolling_averages.csv" % env_string, hundred_averages, delimiter=",")
+    #np.savetxt("./save/cp_test_all_rewards.csv", all_rewards, delimiter=",")
+    #plt.plot(episode_axis, hundred_averages)
+    #plt.show()
     

@@ -9,7 +9,7 @@ from keras.layers import Dense
 from keras.optimizers import Adam
 from matplotlib import pyplot as plt
 
-EPISODES = 4000
+EPISODES = 1000
 
 
 class DQNAgent:
@@ -17,10 +17,10 @@ class DQNAgent:
         self.state_size = state_size
         self.action_size = action_size
         self.memory = deque(maxlen=2000)
-        self.gamma = 0.99    # discount rate
+        self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.9995
+        self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
 
@@ -38,8 +38,6 @@ class DQNAgent:
         self.memory.append((state, action, reward, next_state, done))
 
     def act(self, state):
-        if np.random.rand() <= self.epsilon:
-            return random.randrange(self.action_size)
         act_values = self.model.predict(state)
         return np.argmax(act_values[0])  # returns action
 
@@ -68,61 +66,38 @@ if __name__ == "__main__":
     state_size = env.observation_space.shape[0]
     action_size = env.action_space.n
     agent = DQNAgent(state_size, action_size)
-    # agent.load("./save/cartpole-dqn.h5")
+    agent.load("./save/acrobot-dqn.h5")
     done = False
     batch_size = 32
     scores = []
-    all_rewards = []
     rolling = deque(maxlen=100)
     hundred_averages = []
     episode_axis = []
-    epsilons = []
-    end_flag = False
-    best_mean = -500
-    cur_mean = -500
-    # env.render()
 
     for e in range(EPISODES):
         state = env.reset()
         state = np.reshape(state, [1, state_size])
-
+        episode_reward = 0
+        
         for time in range(500):
-            if (e % 100 == 0):
-                env.render()
-                agent.model.save("./save/acrobot-dqn.h5")
+            env.render()
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
-            reward = reward if not done else -10
             next_state = np.reshape(next_state, [1, state_size])
-            agent.remember(state, action, reward, next_state, done)
             state = next_state
             if done:
-                all_rewards.append(-time)
                 print("episode: {}/{}, score: {}, e: {:.2}"
                       .format(e, EPISODES, -time, agent.epsilon))
                 scores.append(-time);
                 rolling.append(-time);
                 if (e >= 100 and e%10 == 0):
-                    cur_mean = np.mean(rolling)
-                    hundred_averages.append(cur_mean)
+                    hundred_averages.append(np.mean(rolling))
                     episode_axis.append(e)
-                    epsilons.append(agent.epsilon)
-                    if (cur_mean >= 195): end_flag = True
-                break
-        if len(agent.memory) > batch_size:
-            agent.replay(batch_size)
-        if cur_mean > best_mean:
-            #import pdb
-            #pdb.set_trace()
-            best_mean = cur_mean
-            
-        if (end_flag): 
-            break
 
-    agent.save('./save/acrobot-dqn-2.h5')
-    np.savetxt("./save/episode_axis.csv", episode_axis, delimiter=",")
-    np.savetxt("./save/rolling_averages.csv", hundred_averages, delimiter=",")
-    np.savetxt("./save/epsilons.csv", epsilons, delimiter=",")
-    np.savetxt("./save/all_rewards.csv", all_rewards, delimiter=",")
-    # plt.plot(episode_axis, hundred_averages)
+                break
+
+    # plt.plot(scores)
     # plt.show()
+    plt.plot(episode_axis, hundred_averages)
+    plt.show()
+    
