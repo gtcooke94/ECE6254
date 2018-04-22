@@ -11,24 +11,57 @@ mp = 0.1;
 l = 0.5;
 F = 10;
 u = F;
-tspan = [0 8];
-x0 = [0;0;0;.0];
-[t,x] = ode45(@cartpole, tspan, x0);
+tspan = [0 5];
+
+x0 = (rand(4,1)-0.5)*0.1;
+[t,x] = ode45(@cartpole2, tspan, x0);
+%
 far = find(abs(x(:,1))>1);
+if isempty(far)
+    far = 1;
+end
+
 figure(1)
 plot(t,x(:,1:2))
-title(['Plot of x_1(t) & x_2(t), hits |x_1| = 1 at t = ' num2str(t(far(1)))])
+title(['Plot of x_1(t) & x_2(t), hits | x_1| = 1 at t = ' num2str(t(far(1)))])
 xlabel('time (s)')
 ylabel('x_i(t)')
 legend('x_1(t)', 'x_2(t)')
 
-% figure(2)
-% plot(t,x(:,3:4))
-% xlabel('time (s)')
-% ylabel('x_i(t)')
-% legend('x_3(t)', 'x_4(t)')
+figure(2)
+plot(t,x(:,3:4))
+xlabel('time (s)')
+ylabel('x_i(t)')
+legend('x_3(t)', 'x_4(t)')
+U = [];
+for qq = 1:length(t)
+    x1 = x(qq,1);
+    x2 = x(qq,2);
+    x3 = x(qq,3);
+    x4 = x(qq,4);
+    
+    if x2>0 && x3>0
+        u = F;
+    elseif x2>0 && x3<0
+        u = -F;
+    elseif x2<0 && x3>0
+        u = F;
+    elseif x2<0 && x3<0
+        u = -F;
+    else
+        if abs(x3) > 6*pi/360
+            u = -u;
+        end
+    end
+    U(end+1) = u;
+end
 
-%% Animation
+figure(3)
+plot(t,U)
+xlabel('time (s)')
+ylabel('u(t)')
+legend('u(t)')
+% Animation
 theta1 = x(:,3);
 pos = x(:,1);
 R = @(theta) [cos(theta) -sin(theta); sin(theta) cos(theta)];
@@ -50,7 +83,7 @@ for ii = 1:length(theta1)
 end
 
 for jj = 1:length(x2)
-    figure(3)
+    figure(4)
     plot([x1(jj) x2(jj)],[0 y2(jj)], 'r-', 'LineWidth', 3)
     axis([-2.4 2.4 0 2.4])
     axis square
@@ -60,6 +93,8 @@ for jj = 1:length(x2)
     hold off
     pause(1/300)
     if abs(x1(jj)) > 2.4 || abs(theta1(jj)) > 24*pi/360
+        tfinal = t(jj);
+        title(['Plot of End Effector ended at t = ' num2str(tfinal)])
         break;
     end
 end

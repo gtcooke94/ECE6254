@@ -14,7 +14,8 @@ l = 1;
 [X, L, G] = care([0 1; 0 0], [0; 1], diag([10,1]));
 
 tspan = [0 8];
-x0 = (rand(2,1)-0.5).*[2*pi; 2];
+(rand(2,1)-0.5).*[2*pi; 1]
+x0 = [pi; 0];
 [tt,x] = ode45(@final_pendulum, tspan, x0);
 
 V = [];
